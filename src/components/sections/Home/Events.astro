@@ -1,0 +1,101 @@
+---
+/** Events teaser: text from the `homepage` singleton plus the first few workshop cards. */
+import HomeSection from "./HomeSection.astro";
+import WorkshopCard from "@sections/Programme/WorkshopCard.astro";
+import { type Locale } from "@/i18n";
+import type { Homepage } from "@utils/homepage";
+import { routes } from "@/routes";
+
+interface Props {
+  events: Homepage["events"];
+  locale: Locale;
+}
+
+const { events, locale } = Astro.props;
+const { workshops } = events;
+---
+
+<HomeSection size="large" title={events.title} content={events.content}>
+  <div class="events-cta">
+    <p>{events.description}</p>
+    <a href={routes.events(locale)} class="link-underline">
+      <span>{events.buttonText}</span>
+    </a>
+  </div>
+
+  {workshops.length > 0 && (
+    <div class="events-workshops">
+      {workshops.map((workshop) => (
+        <WorkshopCard workshop={workshop} />
+      ))}
+    </div>
+  )}
+</HomeSection>
+
+<style>
+  .events-cta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: calc(100 * var(--unit-fx));
+    margin-bottom: calc(13 * var(--unit-fx));
+    font-size: calc(25 * var(--unit-type));
+  }
+
+  .events-cta a span {
+    display: flex;
+    align-items: center;
+    gap: calc(10 * var(--unit-fx));
+  }
+
+  .events-cta :global(svg) {
+    width: calc(25 * var(--unit-fx));
+    height: calc(25 * var(--unit-fx));
+  }
+
+  .events-workshops {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /*
+   * Tablets and phones: a full-bleed strip. Cards snap to the gutter and the
+   * last one can scroll fully into view.
+   */
+  @media screen and (max-width: 1024px) {
+    .events-workshops {
+      justify-content: flex-start;
+      gap: calc(10 * var(--unit-fx));
+      margin-inline: calc(-1 * var(--gutter));
+      padding-inline: var(--gutter);
+      width: auto;
+      overflow-x: auto;
+      scroll-padding-inline: var(--gutter);
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+  }
+
+  @media screen and (min-width: 601px) and (max-width: 1024px) {
+    .events-workshops :global(.workshop-card) {
+      flex: 0 0 calc(50% - calc(5 * var(--unit-fx)));
+      scroll-snap-align: start;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .events-cta p {
+      display: none;
+    }
+
+    .events-cta {
+      font-size: calc(20 * var(--unit-type));
+    }
+
+    .events-cta :global(svg) {
+      width: calc(15 * var(--unit-fx));
+      height: calc(15 * var(--unit-fx));
+    }
+  }
+</style>

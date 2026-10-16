@@ -1,0 +1,70 @@
+<div id="trailer"></div>
+
+<script>
+  /** Where the pointer was when the previous page unloaded, so the trailer
+   * starts there instead of flying in from the corner on every page load. */
+  const POSITION_KEY = "cursor-trailer-position";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const trailer = document.getElementById("trailer");
+
+    if (!trailer) {
+      console.error("Cursor trailer element not found");
+      return;
+    }
+
+    let last: { x: number; y: number } | null = null;
+
+    const moveTo = (x: number, y: number, duration: number) => {
+      last = { x, y };
+      trailer.animate(
+        {
+          transform: `translate(${x - trailer.offsetWidth / 2}px, ${y - trailer.offsetHeight / 2}px) scale(1)`,
+        },
+        { duration, fill: "forwards" },
+      );
+    };
+
+    const restored = sessionStorage.getItem(POSITION_KEY);
+    if (restored) {
+      const [x, y] = restored.split(",").map(Number);
+      moveTo(x, y, 0);
+      trailer.style.opacity = "1";
+    }
+
+    window.addEventListener("mousemove", (e: MouseEvent) => {
+      // Snap to the pointer on the first move; only ease once it is visible.
+      const visible = trailer.style.opacity === "1";
+      moveTo(e.clientX, e.clientY, visible ? 1800 : 0);
+      trailer.style.opacity = "1";
+    });
+
+    window.addEventListener("pagehide", () => {
+      if (last) sessionStorage.setItem(POSITION_KEY, `${last.x},${last.y}`);
+    });
+  });
+</script>
+<style>
+  #trailer {
+    position: fixed;
+    top: calc(-30 * var(--unit-fx));
+    left: calc(30 * var(--unit-fx));
+    transform: translate(-100px, -100px);
+    opacity: 0;
+    z-index: 1000;
+    mix-blend-mode: difference;
+    transition: all 500ms cubic-bezier(0.645, 0.045, 0.355, 1);
+    will-change: transform;
+    border-radius: calc(3 * var(--unit-fx));
+    background-color: var(--color-cursor);
+    width: calc(12 * var(--unit-fx));
+    height: calc(13 * var(--unit-fx));
+    pointer-events: none;
+  }
+
+  @media (pointer: coarse) {
+    #trailer {
+      display: none;
+    }
+  }
+</style>

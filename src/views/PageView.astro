@@ -1,0 +1,115 @@
+---
+/** A long-form standalone page from the `pages` collection (terms, privacy policy). */
+import MainLayout from "@layouts/MainLayout.astro";
+import Navbar from "@sections/Chrome/Navbar.astro";
+import Footer from "@sections/Chrome/Footer.astro";
+import type { Locale } from "@/i18n";
+import { text } from "@/i18n/localized";
+import { getPage, renderBody } from "@utils/content";
+
+interface Props {
+  locale: Locale;
+  /** Entry id in `src/content/pages/`. */
+  page: string;
+}
+
+const { locale, page } = Astro.props;
+const entry = await getPage(page);
+
+const title = text(entry.data.title, locale);
+const description = text(entry.data.description, locale);
+const { main: body } = await renderBody("pages", entry.id, locale);
+---
+
+<MainLayout
+  locale={locale}
+  title={title}
+  description={description || undefined}
+>
+  <Navbar locale={locale} />
+
+  <article class="page">
+    <h1 class="page-title">{title}</h1>
+    <div class="page-body prose">
+      <Fragment set:html={body} />
+    </div>
+  </article>
+
+  <Footer locale={locale} />
+</MainLayout>
+
+<style>
+  .page {
+    margin-top: calc(120 * var(--unit-fx));
+    margin-bottom: calc(50 * var(--unit-fx));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    width: 90%;
+  }
+
+  .page-title {
+    margin: auto;
+    max-width: 20ch;
+    font-weight: 300;
+    font-size: calc(75 * var(--unit-type));
+    line-height: 1.2;
+    font-family: var(--font-baskervville);
+    text-align: center;
+  }
+
+  .page-body {
+    margin-top: calc(50 * var(--unit-fx));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    width: 65ch;
+    max-width: 100%;
+    font-size: calc(16 * var(--unit-type));
+    line-height: 1.4;
+  }
+
+  .prose :global(h2) {
+    margin-top: calc(40 * var(--unit-fx));
+    font-weight: 500;
+    font-size: calc(22 * var(--unit-type));
+  }
+
+  .prose :global(h3) {
+    margin-top: calc(25 * var(--unit-fx));
+    font-weight: 500;
+    font-size: calc(18 * var(--unit-type));
+  }
+
+  .prose :global(p),
+  .prose :global(ul) {
+    margin-block: calc(20 * var(--unit-fx));
+  }
+
+  .prose :global(ul) {
+    list-style-position: inside;
+  }
+
+  .prose :global(a) {
+    transition: opacity var(--transition-base);
+    text-decoration: underline;
+  }
+
+  .prose :global(a:hover) {
+    opacity: 0.6;
+  }
+
+  @media screen and (max-width: 600px) {
+    .page {
+      margin-bottom: 0;
+    }
+
+    .page-title {
+      max-width: 100%;
+      font-size: calc(35 * var(--unit-type));
+    }
+
+    .page-body {
+      padding-inline: 0;
+      width: 100%;
+    }
+  }
+</style>

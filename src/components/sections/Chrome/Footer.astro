@@ -1,0 +1,327 @@
+---
+/**
+ * Site footer: contact details from the `site` singleton, newsletter sign-up,
+ * legal links and credit. Sticks to the bottom of the viewport as the page
+ * scrolls out from over it.
+ */
+import NewsletterForm from "@components/forms/NewsletterForm";
+import { useUI, type Locale } from "@/i18n";
+import { getSiteIdentity } from "@utils/content";
+import { getFooterNavigation } from "@/routes";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useUI(locale);
+const site = await getSiteIdentity(locale);
+const links = getFooterNavigation(locale);
+const { addressLines, phone, email, credit, sourceHref } = site;
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="footer-track">
+    <div class="footer-sticky">
+      <div class="footer-content">
+        <div class="footer-main">
+          <div class="footer-contact">
+            <address>
+              {addressLines.map((line, i) => (
+                <>
+                  {line}
+                  {i < addressLines.length - 1 && <br />}
+                </>
+              ))}
+            </address>
+            <ul>
+              {phone && (
+                <li>
+                  <a href={phone.href} class="tap-target">
+                    {phone.label}
+                  </a>
+                </li>
+              )}
+              {email && (
+                <li>
+                  <a href={email.href} class="tap-target">
+                    {email.label}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+          <div class="footer-newsletter">
+            <NewsletterForm
+              endpoint={import.meta.env.PUBLIC_FORM_NEWSLETTER}
+              labels={t.newsletter}
+              client:visible
+            />
+          </div>
+        </div>
+
+        <h2 class="footer-wordmark">{site.wordmarks.first}</h2>
+        <hr class="footer-rule" />
+
+        <div class="footer-bottom">
+          <ul class="footer-legal">
+            <li>
+              © {year} {site.name}
+            </li>
+            {links.map((link) => (
+              <>
+                <li aria-hidden="true">|</li>
+                <li>
+                  <a href={link.href} class="tap-target">
+                    {link.label}
+                  </a>
+                </li>
+              </>
+            ))}
+          </ul>
+          {(credit || sourceHref) && (
+            <div class="footer-credit">
+              {credit && (
+                <span>
+                  {t.footer.craftedBy}{" "}
+                  <a
+                    href={credit.href}
+                    target="_blank"
+                    rel="noopener"
+                    class="link-underline"
+                  >
+                    {credit.name}
+                  </a>
+                </span>
+              )}
+              {credit && sourceHref && <span aria-hidden="true">|</span>}
+              {sourceHref && (
+                <a
+                  href={sourceHref}
+                  target="_blank"
+                  rel="noopener"
+                  class="link-underline"
+                >
+                  {t.footer.source}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    --footer-height: calc(600 * var(--unit-fx));
+
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    background-color: var(--color-bg-overlay);
+    height: var(--footer-height);
+    overflow-y: clip;
+  }
+
+  .footer-track {
+    position: relative;
+    top: -100vh;
+    height: calc(100vh + var(--footer-height));
+  }
+
+  .footer-sticky {
+    position: sticky;
+    top: calc(100vh - var(--footer-height));
+    height: var(--footer-height);
+  }
+
+  .footer-content {
+    display: flex;
+    flex-direction: column;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    width: 90%;
+  }
+
+  .footer-main {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: calc(50 * var(--unit-fx));
+    padding-top: calc(25 * var(--unit-fx));
+  }
+
+  .footer-contact {
+    font-size: calc(13 * var(--unit-type));
+  }
+
+  .footer-contact address {
+    font-style: normal;
+  }
+
+  .footer-contact ul {
+    display: flex;
+    flex-direction: column;
+    gap: calc(5 * var(--unit-fx));
+    margin-top: calc(15 * var(--unit-fx));
+    list-style: none;
+  }
+
+  .footer-contact a {
+    transition: opacity var(--transition-base);
+  }
+
+  .footer-contact a:hover {
+    opacity: 0.5;
+  }
+
+  .footer-newsletter {
+    width: 40%;
+  }
+
+  .footer-wordmark {
+    margin-bottom: calc(-50 * var(--unit-fx));
+    margin-inline: auto;
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+    font-size: calc(300 * var(--unit-type));
+    line-height: 1.2;
+    font-family: var(--font-baskervville);
+    user-select: none;
+    text-transform: uppercase;
+  }
+
+  .footer-rule {
+    transform: scaleX(0);
+    transform-origin: left;
+    margin-top: calc(10 * var(--unit-fx));
+    border: none;
+    background-color: var(--color-divider);
+    height: calc(0.5 * var(--unit-fx));
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    margin-top: calc(20 * var(--unit-fx));
+    font-size: calc(12 * var(--unit-type));
+    text-transform: uppercase;
+  }
+
+  .footer-legal {
+    display: flex;
+    align-items: center;
+    gap: calc(10 * var(--unit-fx));
+    list-style: none;
+  }
+
+  .footer-legal a {
+    transition: opacity var(--transition-base);
+  }
+
+  .footer-legal a:hover {
+    opacity: 0.6;
+  }
+
+  .footer-credit {
+    display: flex;
+    align-items: center;
+    gap: calc(10 * var(--unit-fx));
+  }
+
+  .footer-credit a {
+    color: var(--color-brand-text);
+  }
+
+  /* Tablets: contact and newsletter share the row equally at readable sizes. */
+  @media screen and (max-width: 1024px) {
+    .footer {
+      --footer-height: calc(560 * var(--unit-fx));
+    }
+
+    .footer-content {
+      width: 100%;
+    }
+
+    .footer-main {
+      gap: calc(40 * var(--unit-fx));
+    }
+
+    .footer-contact {
+      font-size: calc(15 * var(--unit-type));
+    }
+
+    .footer-newsletter {
+      width: 50%;
+    }
+
+    .footer-bottom {
+      font-size: calc(13 * var(--unit-type));
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .footer {
+      --footer-height: calc(700 * var(--unit-fx));
+    }
+
+    .footer-main {
+      flex-direction: column-reverse;
+      gap: calc(50 * var(--unit-fx));
+    }
+
+    .footer-contact {
+      font-size: calc(15 * var(--unit-type));
+    }
+
+    .footer-contact ul {
+      gap: calc(15 * var(--unit-fx));
+    }
+
+    .footer-newsletter {
+      width: 100%;
+    }
+
+    .footer-wordmark {
+      font-size: calc(120 * var(--unit-type));
+      line-height: 1.6;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      align-items: center;
+      gap: calc(15 * var(--unit-fx));
+    }
+
+    /* One item per line: the separators go, nothing wraps mid-phrase. */
+    .footer-legal {
+      flex-direction: column;
+      gap: calc(12 * var(--unit-fx));
+      text-align: center;
+    }
+
+    .footer-legal li {
+      white-space: nowrap;
+    }
+
+    .footer-legal li[aria-hidden] {
+      display: none;
+    }
+
+    .footer-credit {
+      margin-top: calc(40 * var(--unit-fx));
+    }
+  }
+</style>
+
+<script>
+  import { fitText } from "@scripts/fitText";
+  import { drawRule } from "@scripts/motion";
+
+  drawRule(".footer-rule", ".footer", { start: "top 70%", once: false });
+
+  // The name is editor-controlled: shrink it to the footer's width if needed.
+  const wordmark = document.querySelector<HTMLElement>(".footer-wordmark");
+  if (wordmark) fitText(wordmark);
+</script>

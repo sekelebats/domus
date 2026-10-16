@@ -1,0 +1,107 @@
+---
+/**
+ * Full-viewport hero. Shows the last word of the gallery name as a wordmark
+ * (see `wordmarks()` in `src/utils/site.ts`).
+ *
+ * The wordmark is rendered one letter per <span> so the homepage's first
+ * visit can slide the letters up individually. The stylesheet leaves the
+ * letters in place: the home script moves them below the h1's clip before
+ * its reveal, so without JavaScript the wordmark is simply visible.
+ */
+import { Image } from "astro:assets";
+import hero from "@images/hero.webp";
+import type { Locale } from "@/i18n";
+import { getSiteIdentity } from "@utils/content";
+
+interface Props {
+  locale: Locale;
+}
+
+const site = await getSiteIdentity(Astro.props.locale);
+const wordmark = site.wordmarks.last;
+const letters = Array.from(wordmark);
+---
+
+<section class="hero">
+  <div class="hero-image">
+    <Image
+      src={hero}
+      alt=""
+      format="webp"
+      quality={85}
+      width={2560}
+      loading="eager"
+    />
+  </div>
+  <div class="hero-title">
+    <h1 aria-label={wordmark}>
+      {letters.map((letter) => (
+        <span aria-hidden="true">{letter}</span>
+      ))}
+    </h1>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .hero-image {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .hero-image img {
+    position: absolute;
+    clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    text-align: center;
+  }
+
+  .hero-title h1 {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    color: var(--color-text-secondary);
+    font-weight: 400;
+    font-size: 18.5vw;
+    text-transform: uppercase;
+    /* The letters are inline-blocks; never break between them. */
+    white-space: nowrap;
+  }
+
+  /* Inline-blocks so the home script can transform each letter. */
+  .hero-title h1 span {
+    display: inline-block;
+  }
+
+  @media screen and (max-width: 600px) {
+    .hero-title h1 {
+      font-size: 25vw;
+    }
+  }
+</style>
+
+<script>
+  import { fitText } from "@scripts/fitText";
+
+  // The name is editor-controlled: shrink it to the hero's width if needed.
+  const title = document.querySelector<HTMLElement>(".hero-title h1");
+  const hero = document.querySelector<HTMLElement>(".hero");
+  if (title && hero) fitText(title, { container: hero, fill: 0.9 });
+</script>

@@ -1,0 +1,61 @@
+---
+/** Alphabetical list of artists; hovering a name shows their portrait and short bio. */
+import ArtistRow from "@sections/Artists/ArtistRow.astro";
+import { useUI, type Locale } from "@/i18n";
+import type { Homepage } from "@utils/homepage";
+
+interface Props {
+  artists: Homepage["artists"];
+  locale: Locale;
+}
+
+const { artists, locale } = Astro.props;
+const t = useUI(locale);
+---
+
+<section class="artists">
+  <h2 class="artists-title" data-reveal="lines">
+    {t.home.artists}
+  </h2>
+  <hr class="artists-rule" data-reveal="rule" />
+  <ul class="artists-list">
+    {artists.map((artist) => (
+      <ArtistRow artist={artist} />
+    ))}
+  </ul>
+</section>
+
+<style>
+  .artists {
+    margin-inline: auto;
+    margin-block: var(--section-gap);
+    padding-inline: var(--gutter);
+    width: 100%;
+    line-height: 1.4;
+  }
+
+  .artists-title {
+    font-weight: 300;
+    font-size: calc(25 * var(--unit-type));
+    line-height: 1.2;
+  }
+
+  .artists-rule {
+    margin-top: calc(10 * var(--unit-fx));
+    border: none;
+    background-color: var(--color-divider);
+    height: calc(0.5 * var(--unit-fx));
+  }
+
+  .artists-list {
+    position: relative;
+    margin-block: calc(50 * var(--unit-fx));
+    list-style: none;
+  }
+
+  @media screen and (max-width: 600px) {
+    .artists-list :global(.artist-row + .artist-row) {
+      margin-top: calc(10 * var(--unit-fx));
+    }
+  }
+</style>

@@ -1,0 +1,162 @@
+---
+/**
+ * Homepage. On a visitor's first page view the preloader runs and the hero
+ * reveals; on later views (tracked in sessionStorage) the page loads directly.
+ */
+import MainLayout from "@layouts/MainLayout.astro";
+import Navbar from "@sections/Chrome/Navbar.astro";
+import Footer from "@sections/Chrome/Footer.astro";
+import Preloader from "@sections/Home/Preloader.astro";
+import Hero from "@sections/Home/Hero.astro";
+import Intro from "@sections/Home/Intro.astro";
+import Collection from "@sections/Home/Collection.astro";
+import Artists from "@sections/Home/Artists.astro";
+import Events from "@sections/Home/Events.astro";
+import News from "@sections/Home/News.astro";
+import About from "@sections/Home/About.astro";
+import type { Locale } from "@/i18n";
+import { getHomepageModel } from "@utils/content";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const home = await getHomepageModel(locale);
+---
+
+<MainLayout locale={locale}>
+  <Preloader />
+  <Navbar locale={locale} />
+  <Hero locale={locale} />
+  <Intro intro={home.intro} />
+  <Collection featured={home.featured} />
+  <Artists artists={home.artists} locale={locale} />
+  <Events events={home.events} locale={locale} />
+  <News news={home.news} locale={locale} />
+  <About about={home.about} locale={locale} />
+  <Footer locale={locale} />
+</MainLayout>
+
+<style is:global>
+  /*
+   * Scroll is locked until the preloader finishes; the script below releases
+   * it. Locking via overflow rather than `position: fixed` keeps the layout
+   * width unchanged, so the release does not register as a layout shift.
+   *
+   * The release must restore `visible`, not `auto`: any other value on <html>
+   * stops <body>'s overflow from propagating to the viewport, which turns
+   * <body> into a scroll container and breaks the footer's sticky reveal.
+   */
+  html {
+    overflow-y: hidden;
+  }
+
+  .navbar {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import {
+    gsap,
+    onDesktop,
+    reducedMotion,
+    reveal,
+    slideIn,
+  } from "@scripts/motion";
+
+  // Sections declare their own reveals with `data-reveal`.
+  onDesktop(() => reveal());
+
+  // Featured artworks slide in as they enter the viewport.
+  slideIn(".collection-image");
+
+  // Preloader and hero reveal.
+  const SESSION_KEY = "domus:visited";
+  const heroImage = document.querySelector<HTMLImageElement>(".hero-image img");
+
+  const HERO_REVEAL = "polygon(100% 0%, 0% 0%, 0% 100%, 100% 100%)";
+
+  /**
+   * First visit: a progress bar on a solid curtain, then the curtain rises
+   * while the hero is unveiled beneath it. One timeline, so every step is
+   * positioned relative to the curtain and nothing can pop in behind it.
+   */
+  function firstVisit() {
+    gsap.set(".navbar", { y: -40 });
+    gsap.set(".hero-image img", { scale: 1.12 });
+    // Behind the curtain: drop the letters below the h1's clip to rise from.
+    // A transform, not `top`: moving a positioned box counts as layout shift.
+    gsap.set(".hero-title h1 span", { y: 400 });
+
+    gsap
+      .timeline({ defaults: { ease: "power3.out" } })
+      // Kept short on purpose: everything is loaded well before the bar
+      // finishes, and the curtain holds back the page's first paint.
+      .to(
+        ".preloader-bar",
+        { width: "35%", duration: 0.6, ease: "power4.inOut" },
+        0.2,
+      )
+      .to(".preloader-bar", {
+        width: "100%",
+        duration: 0.4,
+        ease: "power3.inOut",
+      })
+      .to(".preloader-bar", { opacity: 0, duration: 0.3 })
+      .addLabel("curtain", "-=0.1")
+      .to(
+        ".hero-image img",
+        { clipPath: HERO_REVEAL, duration: 1.6, ease: "power4.inOut" },
+        "curtain",
+      )
+      .to(".hero-image img", { scale: 1, duration: 2.2 }, "curtain")
+      .to(
+        ".preloader",
+        {
+          clipPath: "inset(0% 0% 100% 0%)",
+          duration: 1.2,
+          ease: "power4.inOut",
+          onComplete: () => gsap.set(".preloader", { display: "none" }),
+        },
+        "curtain",
+      )
+      .set("html", { overflowY: "visible" }, "curtain+=0.6")
+      // clearProps hands the transform back to the stylesheet afterwards, so
+      // the bar's hide-on-scroll class is not overridden by an inline style.
+      .to(
+        ".navbar",
+        { y: 0, opacity: 1, duration: 1, clearProps: "transform" },
+        "curtain+=0.5",
+      )
+      .to(
+        ".hero-title h1 span",
+        { y: 0, stagger: 0.08, duration: 0.85 },
+        "curtain+=0.5",
+      );
+  }
+
+  function returnVisit() {
+    gsap.set(".preloader", { display: "none" });
+    gsap.set("html", { overflowY: "visible" });
+    gsap.to(".navbar", { opacity: 1, duration: 0.6 });
+    gsap.to(".hero-image img", {
+      clipPath: HERO_REVEAL,
+      duration: 1,
+      ease: "power4.inOut",
+    });
+  }
+
+  if (reducedMotion || sessionStorage.getItem(SESSION_KEY)) {
+    returnVisit();
+  } else {
+    sessionStorage.setItem(SESSION_KEY, "true");
+    if (heroImage && !heroImage.complete) {
+      heroImage.addEventListener("load", firstVisit, { once: true });
+      heroImage.addEventListener("error", firstVisit, { once: true });
+    } else {
+      firstVisit();
+    }
+  }
+</script>

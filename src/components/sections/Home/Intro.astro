@@ -1,0 +1,12 @@
+---
+import HomeSection from "./HomeSection.astro";
+import type { Homepage } from "@utils/homepage";
+
+interface Props {
+  intro: Homepage["intro"];
+}
+
+const { intro } = Astro.props;
+---
+
+<HomeSection title={intro.title} content={intro.content} />

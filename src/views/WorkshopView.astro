@@ -1,0 +1,155 @@
+---
+/** Workshop detail with the interest-registration form. */
+import { Image } from "astro:assets";
+import MainLayout from "@layouts/MainLayout.astro";
+import Navbar from "@sections/Chrome/Navbar.astro";
+import Footer from "@sections/Chrome/Footer.astro";
+import WorkshopRegistrationForm from "@components/forms/WorkshopRegistrationForm";
+import { useUI, type Locale } from "@/i18n";
+import { renderBody } from "@utils/content";
+import { presentWorkshop, type Workshop } from "@utils/programme";
+import { workshopMeta } from "@utils/seo";
+
+interface Props {
+  locale: Locale;
+  workshop: Workshop;
+}
+
+const { locale } = Astro.props;
+const t = useUI(locale);
+const workshop = presentWorkshop(Astro.props.workshop, locale);
+const { title, image } = workshop;
+const { main: body } = await renderBody("workshops", workshop.id, locale);
+const meta = workshopMeta(workshop);
+---
+
+<MainLayout locale={locale} {...meta}>
+  <Navbar locale={locale} />
+
+  <article class="workshop">
+    <header class="workshop-header">
+      <h1>{title}</h1>
+    </header>
+
+    <div class="workshop-register">
+      <div class="workshop-register-info">
+        <h2>{workshop.registerTitle}</h2>
+        <p>{workshop.registerInfo}</p>
+      </div>
+      <WorkshopRegistrationForm
+        workshop={title}
+        locale={locale}
+        endpoint={import.meta.env.PUBLIC_FORM_WORKSHOP}
+        labels={t.workshop}
+        client:visible
+      />
+    </div>
+
+    <div class="workshop-body">
+      {image && (
+        <Image
+          src={image.src}
+          alt={image.alt}
+          class="workshop-image"
+          format="webp"
+          width={1400}
+          loading="eager"
+        />
+      )}
+      <div class="prose">
+        <Fragment set:html={body} />
+      </div>
+    </div>
+  </article>
+
+  <Footer locale={locale} />
+</MainLayout>
+
+<style>
+  .workshop-header {
+    display: flex;
+    align-items: center;
+    padding-top: calc(120 * var(--unit-fx));
+    padding-bottom: calc(40 * var(--unit-fx));
+  }
+
+  .workshop-header h1 {
+    margin: auto;
+    font-weight: 300;
+    font-size: calc(45 * var(--unit-type));
+    line-height: 1.2;
+    font-family: var(--font-baskervville);
+    text-align: center;
+  }
+
+  .workshop-register {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin-inline: auto;
+    margin-block: calc(40 * var(--unit-fx));
+    padding-inline: var(--gutter);
+  }
+
+  .workshop-register-info {
+    width: 50%;
+    max-width: 35vw;
+  }
+
+  .workshop-register-info p {
+    margin-top: calc(25 * var(--unit-fx));
+    font-size: calc(16 * var(--unit-type));
+    line-height: 1.3;
+  }
+
+  .workshop-body {
+    margin-top: calc(50 * var(--unit-fx));
+    margin-bottom: calc(120 * var(--unit-fx));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    width: 65ch;
+    max-width: 100%;
+    font-size: calc(16 * var(--unit-type));
+    line-height: 1.4;
+  }
+
+  .workshop-image {
+    margin-bottom: calc(40 * var(--unit-fx));
+    border-radius: var(--radius);
+    width: 100%;
+    height: auto;
+  }
+
+  .prose :global(p) {
+    margin-block: calc(25 * var(--unit-fx));
+  }
+
+  /* Tablets: intro and form stack, each at full width. */
+  @media screen and (max-width: 1024px) {
+    .workshop-register {
+      flex-direction: column;
+      gap: calc(40 * var(--unit-fx));
+    }
+
+    .workshop-register-info {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .workshop-register :global(.registration-form) {
+      width: 100%;
+      max-width: calc(600 * var(--unit-fx));
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .workshop-header h1 {
+      padding-inline: var(--gutter);
+      font-size: calc(35 * var(--unit-type));
+    }
+
+    .workshop-body {
+      width: 100%;
+    }
+  }
+</style>

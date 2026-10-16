@@ -1,0 +1,131 @@
+---
+/**
+ * The single page shell. Every view renders inside it.
+ *
+ * - `locale` drives `<html lang>`, the hreflang alternates and structured data.
+ * - `theme="dark"` sets `data-theme` on <html> so the token swap in
+ *   variables.css reaches the canvas as well as the body; no component needs
+ *   to know about it.
+ */
+import { Font } from "astro:assets";
+import { SEO } from "astro-seo";
+import { Schema } from "astro-seo-schema";
+import type { Thing, WithContext } from "schema-dts";
+import Cursor from "@ui/Cursor.astro";
+import { SITE } from "@/data/constants";
+import { localeTags, type Locale } from "@/i18n";
+import { getSiteIdentity } from "@utils/content";
+import { pageContext, webPageSchema } from "@utils/seo";
+import "@styles/global.css";
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+  schema?: WithContext<Thing>;
+  theme?: "light" | "dark";
+  /** Override the smooth-scroll settings, e.g. for slower cinematic pages. */
+  scroll?: "default" | "slow";
+}
+
+const {
+  locale,
+  title,
+  description,
+  schema,
+  theme = "light",
+  scroll = "default",
+} = Astro.props;
+
+const site = await getSiteIdentity(locale);
+const page = pageContext(Astro, locale);
+const pageTitle = title ? `${title} | ${site.name}` : site.name;
+const pageDescription = description ?? site.description;
+const socialImage = new URL(SITE.socialImage.src, page.site).href;
+const canonical = page.url.href;
+
+const defaultSchema = webPageSchema(page, site, {
+  title: pageTitle,
+  description: pageDescription,
+});
+---
+
+<html
+  lang={localeTags[locale]}
+  data-theme={theme === "dark" ? "dark" : undefined}
+>
+  <head>
+    <SEO
+      charset="utf-8"
+      title={pageTitle}
+      description={pageDescription}
+      canonical={canonical}
+      openGraph={{
+        basic: {
+          title: pageTitle,
+          type: "website",
+          image: socialImage,
+          url: canonical,
+        },
+        optional: {
+          description: pageDescription,
+          locale: localeTags[locale].replace("-", "_"),
+        },
+      }}
+      twitter={{
+        card: "summary_large_image",
+        title: pageTitle,
+        description: pageDescription,
+        image: socialImage,
+        imageAlt: site.name,
+      }}
+      extend={{
+        link: [
+          {
+            rel: "icon",
+            href: "/favicon-96x96.png",
+            type: "image/png",
+            sizes: "96x96",
+          },
+          { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+          { rel: "shortcut icon", href: "/favicon.ico" },
+          {
+            rel: "apple-touch-icon",
+            href: "/apple-touch-icon.png",
+            sizes: "180x180",
+          },
+          { rel: "manifest", href: "/site.webmanifest" },
+          { rel: "sitemap", href: "/sitemap-index.xml" },
+          ...page.alternates.map(({ locale: l, href }) => ({
+            rel: "alternate",
+            hreflang: l,
+            href,
+          })),
+          { rel: "alternate", hreflang: "x-default", href: page.xDefault },
+        ],
+        meta: [
+          {
+            name: "viewport",
+            content: "width=device-width, initial-scale=1.0",
+          },
+          { name: "mobile-web-app-capable", content: "yes" },
+          { name: "generator", content: Astro.generator },
+          { name: "apple-mobile-web-app-title", content: site.name },
+          { name: "theme-color", content: SITE.themeColor },
+        ],
+      }}
+    />
+    <Schema item={schema ?? defaultSchema} />
+    <Font cssVariable="--font-baskervville" preload />
+    <Font cssVariable="--font-satoshi" preload />
+    <script>
+      import "@scripts/smoothScroll";
+    </script>
+  </head>
+  <body data-scroll={scroll}>
+    <Cursor />
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

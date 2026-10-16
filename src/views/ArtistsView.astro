@@ -1,0 +1,147 @@
+---
+/** Artists index with a tab for Estates. */
+import MainLayout from "@layouts/MainLayout.astro";
+import Navbar from "@sections/Chrome/Navbar.astro";
+import Footer from "@sections/Chrome/Footer.astro";
+import ArtistRow from "@sections/Artists/ArtistRow.astro";
+import { useUI, type Locale } from "@/i18n";
+import { getArtists } from "@utils/content";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useUI(locale);
+const { living: artists, estates } = await getArtists(locale);
+---
+
+<MainLayout
+  locale={locale}
+  title={t.artists.title}
+  description={t.artists.description}
+>
+  <Navbar locale={locale} />
+
+  <section class="artists">
+    <h1 class="artists-tabs" role="tablist">
+      <button
+        class="artists-tab is-active"
+        role="tab"
+        aria-selected="true"
+        aria-controls="artists-list"
+      >
+        {t.artists.tabArtists}
+      </button>
+      {estates.length > 0 && (
+        <>
+          {" "}
+          <span class="artists-tabs-separator" aria-hidden="true">
+            |
+          </span>{" "}
+          <button
+            class="artists-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="estates-list"
+          >
+            {t.artists.tabEstates}
+          </button>
+        </>
+      )}
+    </h1>
+    <hr class="section-rule" />
+    <div class="artists-lists">
+      <ul class="artists-list" id="artists-list" role="tabpanel">
+        {artists.map((artist) => (
+          <ArtistRow artist={artist} />
+        ))}
+      </ul>
+      <ul class="artists-list" id="estates-list" role="tabpanel" hidden>
+        {estates.map((artist) => (
+          <ArtistRow artist={artist} />
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <Footer locale={locale} />
+</MainLayout>
+
+<style>
+  .artists {
+    margin-top: calc(120 * var(--unit-fx));
+    margin-bottom: calc(300 * var(--unit-fx));
+    padding-inline: var(--gutter);
+  }
+
+  .artists-tabs {
+    font-weight: 300;
+    font-size: calc(25 * var(--unit-type));
+  }
+
+  .artists-tab {
+    opacity: 0.5;
+    transition: opacity var(--transition-base);
+    font-weight: 300;
+  }
+
+  .artists-tab:hover {
+    opacity: 0.7;
+  }
+
+  .artists-tab.is-active {
+    opacity: 1;
+  }
+
+  .artists-tabs-separator {
+    color: var(--color-divider);
+  }
+
+  .artists-lists {
+    margin-block: calc(50 * var(--unit-fx));
+  }
+
+  .artists-list {
+    position: relative;
+    list-style: none;
+  }
+
+  .artists-list :global(.artist-row:last-child) {
+    padding-bottom: calc(150 * var(--unit-fx));
+  }
+
+  @media screen and (max-width: 600px) {
+    .artists-lists {
+      margin-block: calc(25 * var(--unit-fx));
+    }
+
+    .artists-list :global(.artist-row:last-child) {
+      padding-bottom: 0;
+    }
+  }
+</style>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>(".artists-tab");
+  const key = `artists-tab:${location.pathname}`;
+
+  function activate(id: string) {
+    tabs.forEach((tab) => {
+      const active = tab.getAttribute("aria-controls") === id;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+      const panel = document.getElementById(tab.getAttribute("aria-controls")!);
+      if (panel) panel.hidden = !active;
+    });
+    sessionStorage.setItem(key, id);
+  }
+
+  tabs.forEach((tab) =>
+    tab.addEventListener("click", () =>
+      activate(tab.getAttribute("aria-controls")!),
+    ),
+  );
+  const saved = sessionStorage.getItem(key);
+  if (saved && document.getElementById(saved)) activate(saved);
+</script>

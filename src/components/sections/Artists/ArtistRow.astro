@@ -1,0 +1,97 @@
+---
+/**
+ * One row of an artists list (the artists index and the homepage);
+ * hovering the name reveals the portrait and short bio. Spacing between
+ * rows belongs to the list that holds them.
+ */
+import { Image } from "astro:assets";
+import type { ArtistPresentation } from "@utils/artists";
+
+interface Props {
+  artist: ArtistPresentation;
+}
+
+const { artist } = Astro.props;
+const { portrait } = artist;
+---
+
+<li class="artist-row">
+  <a class="artist-row-link" href={artist.href}>
+    {artist.name}
+  </a>
+  <div class="artist-row-preview">
+    <div class="artist-row-preview-inner">
+      {portrait && (
+        <Image
+          src={portrait.src}
+          alt={portrait.alt}
+          format="webp"
+          width={600}
+          class="artist-row-portrait"
+        />
+      )}
+      <p class="artist-row-bio">{artist.shortBio}</p>
+    </div>
+  </div>
+</li>
+
+<style>
+  .artist-row-link {
+    display: inline-block;
+    position: relative;
+    /* Dimmed at rest (below 4.5:1 on white); hover and focus bring it to full. */
+    opacity: 0.5;
+    transition: opacity var(--transition-base);
+    font-size: calc(45 * var(--unit-type));
+    line-height: 1.2;
+    font-family: var(--font-baskervville);
+  }
+
+  .artist-row-link:hover,
+  .artist-row-link:focus-visible {
+    opacity: 1;
+  }
+
+  .artist-row-preview {
+    position: absolute;
+    top: 0;
+    right: 0;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    width: calc(230 * var(--unit-fx));
+    height: 100vh;
+    pointer-events: none;
+  }
+
+  .artist-row-link:hover ~ .artist-row-preview {
+    opacity: 1;
+  }
+
+  .artist-row-preview-inner {
+    position: sticky;
+    top: calc(30 * var(--unit-fx));
+  }
+
+  .artist-row-portrait {
+    border-radius: var(--radius);
+    width: calc(230 * var(--unit-fx));
+    height: 20vw;
+    object-fit: cover;
+  }
+
+  .artist-row-bio {
+    padding-top: calc(10 * var(--unit-fx));
+    font-size: calc(14 * var(--unit-type));
+    font-family: var(--font-satoshi);
+  }
+
+  @media screen and (max-width: 600px) {
+    .artist-row-link {
+      font-size: calc(25 * var(--unit-type));
+    }
+
+    .artist-row-preview {
+      display: none;
+    }
+  }
+</style>

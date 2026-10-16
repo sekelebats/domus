@@ -1,0 +1,213 @@
+---
+/** Artist detail: biography, quote and every work of theirs the gallery holds. */
+import { Image } from "astro:assets";
+import MainLayout from "@layouts/MainLayout.astro";
+import Navbar from "@sections/Chrome/Navbar.astro";
+import Footer from "@sections/Chrome/Footer.astro";
+import ArtworkCard from "@sections/Catalogue/ArtworkCard.astro";
+import { useUI, type Locale } from "@/i18n";
+import { presentArtist, type Artist } from "@utils/artists";
+import { getArtistWorks } from "@utils/content";
+import { artistMeta, pageContext } from "@utils/seo";
+
+interface Props {
+  locale: Locale;
+  artist: Artist;
+}
+
+const { locale } = Astro.props;
+const t = useUI(locale);
+const artist = presentArtist(Astro.props.artist, locale);
+const { portrait, biography, quote } = artist;
+const works = await getArtistWorks(Astro.props.artist, locale);
+const meta = artistMeta(pageContext(Astro, locale), artist);
+---
+
+<MainLayout locale={locale} {...meta}>
+  <Navbar locale={locale} />
+
+  <div class="artist">
+    <section class="artist-hero">
+      <div>
+        <h1 class="artist-name">{artist.name}</h1>
+        {artist.cvHref && (
+          <a
+            href={artist.cvHref}
+            target="_blank"
+            rel="noopener"
+            class="button-outline artist-cv"
+          >
+            <span>{t.artists.viewCv}</span>
+          </a>
+        )}
+      </div>
+      <div class="artist-biography">
+        {biography.map((para) => (
+          <p>{para}</p>
+        ))}
+      </div>
+    </section>
+
+    <hr class="artist-rule" />
+
+    <section class="artist-quote">
+      {portrait && (
+        <Image
+          src={portrait.src}
+          alt={portrait.alt}
+          format="webp"
+          width={600}
+          class="artist-portrait"
+        />
+      )}
+      {quote && <blockquote>“{quote}”</blockquote>}
+    </section>
+
+    {works.length > 0 && (
+      <section class="artist-works">
+        <h2 class="section-heading">{t.artists.featuredWorks}</h2>
+        <hr class="section-rule" />
+        <ul class="artist-works-grid">
+          {works.map((presentation) => (
+            <ArtworkCard presentation={presentation} />
+          ))}
+        </ul>
+      </section>
+    )}
+  </div>
+
+  <Footer locale={locale} />
+</MainLayout>
+
+<style>
+  .artist {
+    margin-block: calc(120 * var(--unit-fx));
+    padding-inline: var(--gutter);
+  }
+
+  .artist-hero {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: calc(40 * var(--unit-fx));
+  }
+
+  .artist-name {
+    margin-bottom: calc(30 * var(--unit-fx));
+    font-weight: 300;
+    font-size: calc(75 * var(--unit-type));
+    font-family: var(--font-baskervville);
+  }
+
+  .artist-cv {
+    font-size: calc(12 * var(--unit-type));
+  }
+
+  .artist-biography p {
+    margin-block: calc(15 * var(--unit-fx));
+    font-size: calc(14 * var(--unit-type));
+  }
+
+  .artist-rule {
+    margin-block: calc(100 * var(--unit-fx));
+    border: none;
+    background-color: var(--color-divider);
+    height: calc(0.5 * var(--unit-fx));
+  }
+
+  .artist-quote {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(100 * var(--unit-fx));
+  }
+
+  .artist-portrait {
+    flex-shrink: 0;
+    border-radius: var(--radius);
+    width: calc(200 * var(--unit-fx));
+    height: 20vw;
+    object-fit: cover;
+  }
+
+  .artist-quote blockquote {
+    font-size: calc(40 * var(--unit-type));
+    font-family: var(--font-baskervville);
+  }
+
+  .artist-works {
+    margin-block: calc(120 * var(--unit-fx));
+  }
+
+  .artist-works-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: calc(50 * var(--unit-fx));
+    row-gap: calc(50 * var(--unit-fx));
+    padding-block: calc(50 * var(--unit-fx));
+    list-style: none;
+  }
+
+  /* Tablets: a single column at readable sizes; the works grid goes 3-up. */
+  @media screen and (max-width: 1024px) {
+    .artist-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .artist-cv {
+      font-size: calc(14 * var(--unit-type));
+    }
+
+    .artist-biography p {
+      font-size: calc(16 * var(--unit-type));
+    }
+
+    .artist-quote {
+      gap: calc(50 * var(--unit-fx));
+    }
+
+    .artist-portrait {
+      height: 30vw;
+    }
+
+    .artist-quote blockquote {
+      font-size: calc(30 * var(--unit-type));
+    }
+
+    .artist-works-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: calc(30 * var(--unit-fx));
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .artist-name {
+      font-size: calc(40 * var(--unit-type));
+    }
+
+    .artist-rule {
+      margin-block: calc(50 * var(--unit-fx));
+    }
+
+    .artist-quote {
+      flex-direction: column-reverse;
+      gap: calc(50 * var(--unit-fx));
+    }
+
+    .artist-portrait {
+      height: 75vw;
+    }
+
+    .artist-quote blockquote {
+      font-size: calc(20 * var(--unit-type));
+    }
+
+    .artist-works {
+      margin-block: calc(60 * var(--unit-fx));
+    }
+
+    .artist-works-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: calc(20 * var(--unit-fx));
+    }
+  }
+</style>
